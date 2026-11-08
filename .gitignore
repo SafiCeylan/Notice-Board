@@ -1,5 +1,6 @@
 node_modules/
-js/
+# Yalnız KÖKTEKİ derleme çıktısı; çıpasız `js/` tests/js'i de dışlıyordu (8 Kas 2026).
+/js/
 *.log
 .env.deploy
 .DS_Store
