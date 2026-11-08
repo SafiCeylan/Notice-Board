@@ -1,0 +1,2 @@
+# Sunucuya giden .sh dosyalarinda satir sonu LF kalmali (CRLF tuzagi).
+*.sh text eol=lf

@@ -1,0 +1,403 @@
+# -*- coding: utf-8 -*-
+"""
+l10n/en.json + l10n/en.js üretir.
+
+Kaynak dil TÜRKÇE: arayüzde t('noticeboard', 'Kaydet') gibi Türkçe metinler yazılır.
+Nextcloud'un dili Türkçe olduğunda bu metinler olduğu gibi görünür; İngilizce
+olduğunda burada üretilen sözlükten çevrilir.
+
+Çalıştırma:  python build-l10n.py
+Yeni metin eklediysen ÇEVİRİSİNİ de buraya ekle, yoksa betik uyarır.
+"""
+
+import io
+import json
+import os
+import re
+
+TRANSLATIONS = {
+    'Acil': 'Urgent',
+    'Alt başlık': 'Subheading',
+    'Altı çizili': 'Underline',
+    'Alıntı': 'Quote',
+    'Arşivlenmiş': 'Archived',
+    'Ayarlar okunamadı.': 'Could not load settings.',
+    'Bana gelenler': 'For me',
+    'Bağlantı': 'Link',
+    'Başlık': 'Title',
+    'Başlıksız duyuru': 'Untitled announcement',
+    'Bildirim gönderilsin': 'Send a notification',
+    'Bir görsel seçin': 'Select an image',
+    'Bu görseli kullan': 'Use this image',
+    'Dosya seçin': 'Select files',
+    '{count} dosyayı ekle': 'Attach {count} files',
+    'Biçimi temizle': 'Clear formatting',
+    'Kapak konumu 0 ile 100 arasında olmalı.': 'The cover position must be between 0 and 100.',
+    'Eklenen dosya dosyalarınızda bulunamadı.': 'The attached file was not found in your files.',
+    'Kapak görseli dosyalarınızda bulunamadı ya da bir görsel değil.':
+        'The cover image was not found in your files or is not an image.',
+    # Metne gömülü görsel (20 Eki 2026)
+    'Görsel ekle': 'Insert image',
+    'Görsel yükleniyor…': 'Uploading image…',
+    'Bu görsel türü desteklenmiyor: {name}': 'This image type is not supported: {name}',
+    'Görsel çok büyük (en fazla 20 MB): {name}': 'The image is too large (max. 20 MB): {name}',
+    'Görsel yüklenemedi: {name}': 'Could not upload the image: {name}',
+    'Duyuru görselleri': 'Announcement images',
+    'Duyuru metnine en fazla %s görsel eklenebilir.': 'At most %s images can be added to the announcement text.',
+    'Metindeki görsellerden biri dosyalarınızda bulunamadı ya da bir görsel değil.':
+        'One of the images in the text was not found in your files or is not an image.',
+    # Metindeki görselin yerleşimi (27 Eki 2026)
+    'Görsel yerleşimi': 'Image layout',
+    'Solda': 'Left',
+    'Ortada': 'Center',
+    'Sağda': 'Right',
+    'Satırda': 'In line',
+    'Görsel solda, metin sağından akar': 'Image on the left, text flows on its right',
+    'Görsel ortada, kendi satırında': 'Image centered on its own line',
+    'Görsel sağda, metin solundan akar': 'Image on the right, text flows on its left',
+    'Görsel kendi satırında, sola yaslı': 'Image on its own line, aligned left',
+    'Tam': 'Full',
+    'Asıl boyut': 'Original size',
+    'Görsel açıklaması (ekran okuyucular için)': 'Image description (for screen readers)',
+    'Görseli kaldır': 'Remove image',
+    'Boyutlandırmak için sürükleyin': 'Drag to resize',
+    'Köşedeki tutamağı sürükleyerek de boyutlandırabilirsiniz. Görseli tutup başka bir yere taşıyabilirsiniz.':
+        'You can also resize by dragging the corner handle. Grab the image to move it elsewhere.',
+    # Kapağa yazı (7 Eki 2026)
+    'Yazı': 'Text',
+    'Kapağa yazı ekle': 'Add text to the cover',
+    'Örn. SON GÜN 15 EKİM': 'E.g. LAST DAY 15 OCTOBER',
+    'Konum': 'Position',
+    'Üst': 'Top',
+    'Orta': 'Middle',
+    'Alt': 'Bottom',
+    'Görünüm': 'Style',
+    'Koyu şerit': 'Dark band',
+    'Açık şerit': 'Light band',
+    'Gölgeli': 'Shadow',
+    'Boyut': 'Size',
+    'Küçük': 'Small',
+    'Orta boy': 'Medium',
+    'Büyük': 'Large',
+    # Vitrin ayarları (yönetici, 7 Eki 2026)
+    'Panodaki vitrin widget’ının herkes için nasıl davranacağını seçin.':
+        'Choose how the dashboard slider widget behaves for everyone.',
+    'Dönme süresi': 'Rotation interval',
+    '{n} saniye': '{n} seconds',
+    '{n} saniye (varsayılan)': '{n} seconds (default)',
+    'Kendiliğinden dönmesin': 'Do not rotate automatically',
+    'Vitrinde gösterilecekler': 'Shown in the slider',
+    'En yeni duyurular': 'Newest announcements',
+    'Yalnız sabitlenmiş, önemli ve acil duyurular': 'Only pinned, important and urgent announcements',
+    'Böyle bir duyuru yoksa vitrin boş kalmaz, en yeni duyuruları gösterir.':
+        'If there are none, the slider is not left empty and shows the newest announcements.',
+    'Kaydedildi. Pano bir sonraki açılışta yeni ayarla çalışır.':
+        'Saved. The dashboard uses the new settings the next time it is opened.',
+    'Dönme süresi 0 (kapalı) ya da %s–%s saniye olmalı.':
+        'The rotation interval must be 0 (off) or %s–%s seconds.',
+    'Geçersiz vitrin seçimi.': 'Invalid slider selection.',
+    # Kapak düzenleyicisi (7 Eki 2026) — odak noktası işaretçisinin yerine.
+    'Kapak görselini düzenle': 'Edit cover image',
+    'Görsel açılamadı.': 'Could not open the image.',
+    'Görsel hazırlanamadı. Daha küçük bir görselle tekrar deneyin.':
+        'Could not prepare the image. Try again with a smaller image.',
+    'Kırpma oranı': 'Crop ratio',
+    'Oran': 'Ratio',
+    '16:9 · Vitrin': '16:9 · Slider',
+    'Asıl oran': 'Original',
+    'Serbest': 'Free',
+    'Sola döndür': 'Rotate left',
+    'Sağa döndür': 'Rotate right',
+    'Yatay çevir': 'Flip horizontally',
+    'Dikey çevir': 'Flip vertically',
+    'Yakınlaştır': 'Zoom in',
+    'Uzaklaştır': 'Zoom out',
+    'Sıfırla': 'Reset',
+    'Düzleştir': 'Straighten',
+    'Görseli sürükleyerek kaydırın, fare tekerleğiyle yakınlaştırın. Çerçevenin köşelerinden kırpma alanını değiştirin.':
+        'Drag the image to move it and use the mouse wheel to zoom. Resize the crop area from the frame corners.',
+    'Renk': 'Color',
+    'Parlaklık': 'Brightness',
+    'Karşıtlık': 'Contrast',
+    'Doygunluk': 'Saturation',
+    'Panoda nasıl görünecek': 'How it looks on the dashboard',
+    'Kart': 'Card',
+    'Liste': 'List',
+    'Vitrin 16:9 gösterir; başka oranda kırpılan kapağın kenarları vitrinde kesilir.':
+        'The slider shows 16:9; a cover cropped to another ratio is trimmed at the edges there.',
+    'Uygula': 'Apply',
+    'Dosyalarımdan seç': 'Choose from my files',
+    'Bilgisayardan yükle': 'Upload from computer',
+    'Düzenlendi · kaydedince yüklenecek': 'Edited · uploaded when you save',
+    'Seçtiğiniz görsel düzenleyicide açılır: kırpın, döndürün, renklerini ayarlayın. Asıl dosyanıza dokunulmaz; düzenlenmiş kopya dosyalarınızdaki “{folder}” klasörüne kaydedilir.':
+        'The image you choose opens in the editor: crop, rotate and adjust its colors. Your original file is not changed; the edited copy is saved to the “{folder}” folder in your files.',
+    'Duyuru kapakları': 'Announcement covers',
+    'Duyuru sayfası': 'Announcement page',
+    'Pano vitrini': 'Dashboard slider',
+    'Kapak için JPEG, PNG, GIF ya da WebP görsel seçin.': 'Choose a JPEG, PNG, GIF or WebP image for the cover.',
+    'Görsel çok büyük (en fazla {size} MB).': 'The image is too large (maximum {size} MB).',
+    'Kapak görseli dosyalarınıza yüklenemedi. Depolama kotanızı kontrol edip tekrar deneyin.':
+        'Could not upload the cover image to your files. Check your storage quota and try again.',
+    'Biçimlendirme': 'Formatting',
+    'Boş bırakılırsa hemen yayınlanır.': 'Leave empty to publish immediately.',
+    'Boş bırakılırsa süresiz kalır.': 'Leave empty to keep it indefinitely.',
+    'Bu duyuru {date} tarihinde yayından kalkacak.': 'This announcement will be retired on {date}.',
+    'Bu duyuru {date} tarihinde yayınlanacak.': 'This announcement will be published on {date}.',
+    'Bu duyurunun metni yok.': 'This announcement has no text.',
+    'Bu duyuruya erişiminiz yok.': 'You do not have access to this announcement.',
+    'Dağıtım ve zamanlama seçenekleri': 'Delivery and scheduling options',
+    'Dosya': 'File',
+    'Dosya ekle': 'Add file',
+    'Duyuru Panosu': 'Notice Board',
+    'Duyuru açılamadı': 'Could not open the announcement',
+    'Duyuru bulunamadı.': 'Announcement not found.',
+    'Duyuru kaydedildi.': 'Announcement saved.',
+    'Duyuru kaydedilemedi.': 'Could not save the announcement.',
+    'Duyuru silindi.': 'Announcement deleted.',
+    'Duyuru silinemedi.': 'Could not delete the announcement.',
+    'Duyuru yayınlayabilecek hesap ve grupları seçin. Yöneticiler bu listeden bağımsız olarak her zaman duyuru yayınlayabilir.':
+        'Choose the accounts and groups allowed to publish announcements. Administrators can always publish, regardless of this list.',
+    'Duyurular': 'Announcements',
+    'Duyuru yok': 'No announcements',
+    # Widget başlıkları: seçicide ~16 karakterden sonra kesiliyor ("Announcements (c…"),
+    # bu yüzden KISA ve türü söyleyen adlar (WidgetContractTest uzunluğu kilitler).
+    'Duyuru listesi': 'Notice list',
+    'Duyuru kartları': 'Notice cards',
+    'Duyuru vitrini': 'Notice slider',
+    'Size yönelik bir duyuru yok.': 'You have no announcements.',
+    'Tüm duyurular': 'All announcements',
+    'Sabit': 'Pinned',
+    'Önceki duyuru': 'Previous announcement',
+    'Sonraki duyuru': 'Next announcement',
+    'Yeni bir duyuru yayınlandığında': 'When a new announcement is published',
+    '{author} bir duyuru yayınladı: {announcement}': '{author} published an announcement: {announcement}',
+    'Duyurular yüklenemedi': 'Could not load announcements',
+    'Duyurular yüklenemedi.': 'Could not load announcements.',
+    'Duyuruyu düzenle': 'Edit announcement',
+    'Duyuruyu sil': 'Delete announcement',
+    'Daha fazla göster': 'Show more',
+    'Devamı yüklenemedi.': 'Could not load more.',
+    'Yükleniyor…': 'Loading…',
+    'Kaydedilmemiş değişiklikler': 'Unsaved changes',
+    'Kapat ve at': 'Close and discard',
+    'Yazmaya devam et': 'Keep editing',
+    'Ekle': 'Add',
+    'https://ornek.com': 'https://example.com',
+    'Duyuruyu aç': 'Open the announcement',
+    'Duyuru: %s': 'Announcement: %s',
+    '%s bir duyuru yayınladı.': '%s published an announcement.',
+    '%1$s bir duyuru yayınladı: %2$s': '%1$s published an announcement: %2$s',
+    'Düzenle': 'Edit',
+    'E-posta gönderilsin': 'Send an email',
+    # Talk kanalı (12 Eki 2026)
+    'Talk mesajı gönderilsin': 'Send a Talk message',
+    'Hedeflenen kişilerin Talk’taki “Duyuru Panosu” sohbetine mesaj düşer (yanıt ve arama kapalı); size de bir kopyası gelir.':
+        'Targeted people get a message in their “Notice Board” conversation in Talk (no replies or calls); you get a copy too.',
+    # Talk duyuru sohbeti (27 Eki 2026, 0.5.2): kilitli, aramasız grup sohbeti
+    'Size gönderilen duyurular burada görünür. Bu sohbet yalnız bilgilendirme içindir: yanıt yazılamaz, sesli ya da görüntülü arama başlatılamaz.':
+        'Announcements sent to you appear here. This conversation is for information only: replies and audio or video calls are not possible.',
+    'Ekler': 'Attachments',
+    'Ekten çıkar': 'Remove attachment',
+    'Etkinlik akışına düşsün': 'Add to the activity stream',
+    'Bir yorum yazın…': 'Write a comment…',
+    'Bu yorum silinsin mi?': 'Delete this comment?',
+    'Göndermek için Ctrl+Enter': 'Ctrl+Enter to send',
+    'Gönder': 'Send',
+    'Henüz yorum yok. İlk yazan siz olun.': 'No comments yet. Be the first.',
+    'Yorumlar': 'Comments',
+    'Yorumlar yüklenemedi.': 'Could not load comments.',
+    'Yorum gönderilemedi.': 'Could not post the comment.',
+    'Yorum silinemedi.': 'Could not delete the comment.',
+    'Yorumu sil': 'Delete comment',
+    'Grup aramak için yazın': 'Type to search groups',
+    'Grup seçin veya aramak için yazın': 'Pick a group, or type to search',
+    'Gruplar Nextcloud’un kendi grup listesinden gelir; burada yeni grup oluşturulmaz.':
+        'Groups come from Nextcloud’s own group list; no new groups are created here.',
+    'Henüz duyuru oluşturulmamış': 'No announcements created yet',
+    'Henüz duyuru yok': 'No announcements yet',
+    'Hesap aramak için yazın': 'Type to search accounts',
+    'Kaldır': 'Remove',
+    'Kalın': 'Bold',
+    'Kapak görseli': 'Cover image',
+    'Kapak görseli seç': 'Choose a cover image',
+    'Kategori': 'Category',
+    'Kaydedildi.': 'Saved.',
+    'Kaydedilemedi.': 'Could not save.',
+    'Kaydediliyor…': 'Saving…',
+    'Kaydedilmemiş değişiklikler var. Yine de kapatılsın mı?':
+        'There are unsaved changes. Close anyway?',
+    'Kaydet': 'Save',
+    'Kaydet ve yayınla': 'Save and publish',
+    'Kimler görsün': 'Who can see it',
+    'Kod bloğu': 'Code block',
+    'Listenin en üstüne sabitle': 'Pin to the top of the list',
+    'Madde listesi': 'Bulleted list',
+    'Metin': 'Text',
+    'Normal': 'Normal',
+    'Numaralı liste': 'Numbered list',
+    'Okumak için soldan bir duyuru seçin.': 'Pick an announcement on the left to read it.',
+    'Oluşturduğunuz taslak ve zamanlanmış duyurular da burada listelenir.':
+        'Your drafts and scheduled announcements are listed here too.',
+    'Sabitlenmiş': 'Pinned',
+    'Sil': 'Delete',
+    'Size yönelik bir duyuru yayınlandığında burada görünecek.':
+        'Announcements addressed to you will show up here.',
+    'Sunucuya ulaşılamadı. Bağlantınızı kontrol edip yeniden deneyin.':
+        'Could not reach the server. Check your connection and try again.',
+    'Taslak': 'Draft',
+    'Taslak olarak kaydet': 'Save as draft',
+    'Tüm kullanıcılar': 'All users',
+    'Tümü (yönetim)': 'All (manage)',
+    'Vazgeç': 'Cancel',
+    'Vurgula': 'Highlight',
+    'Yalnızca seçtiğim gruplar': 'Only the groups I choose',
+    'Yayın zamanı': 'Publish time',
+    'Yayında': 'Published',
+    'Yayınla': 'Publish',
+    'Yayından kalkma zamanı': 'Retire time',
+    'Yayından kalkma zamanı, yayın zamanından sonra olmalı.':
+        'The retire time must be later than the publish time.',
+    'Yayıncı gruplar': 'Publisher groups',
+    'Yayıncı hesaplar': 'Publisher accounts',
+    'Yazı rengi': 'Text colour',
+    'Yeni': 'New',
+    'Yeni duyuru': 'New announcement',
+    'Yeniden dene': 'Try again',
+    'Yorumlara izin ver': 'Allow comments',
+    'Zamanlanmış': 'Scheduled',
+
+    # --- Sunucu hata mesajları (TranslatableException, Hata #25) ---
+    # `%s` NC'nin PHP çevirisinde vsprintf yer tutucusudur; çeviride de korunmalı.
+    'Başlık boş olamaz.': 'The title cannot be empty.',
+    'Başlık en fazla %s karakter olabilir.': 'The title can be at most %s characters long.',
+    'Bu duyuruda yorumlar kapalı.': 'Comments are closed for this announcement.',
+    'Bu işlem için yetkiniz yok.': 'You are not allowed to do this.',
+    'Bu yorumu silemezsiniz.': 'You cannot delete this comment.',
+    'Duyuru metni çok uzun.': 'The announcement text is too long.',
+    'En fazla %s dosya eklenebilir.': 'You can attach at most %s files.',
+    'Geçersiz öncelik değeri.': 'Invalid priority value.',
+    'Kategori en fazla %s karakter olabilir.': 'The category can be at most %s characters long.',
+    'Silme zamanı, yayın zamanından sonra olmalı.': 'The retire time must be later than the publish time.',
+    'Yorum boş olamaz.': 'The comment cannot be empty.',
+    'Yorum bulunamadı.': 'Comment not found.',
+    'Yorum en fazla %s karakter olabilir.': 'A comment can be at most %s characters long.',
+    'Yorum yazmak için oturum açmalısınız.': 'You need to log in to comment.',
+    'Zamanla': 'Schedule',
+    # Kategori ≠ hedefleme (7 Eki 2026): örnek bilerek konu adı, departman değil.
+    # Hazır kategoriler (src/cover/categories.js) — İngilizceleri de kendi kapak kuralına düşmeli,
+    # tests/js/categories.test.mjs denetler.
+    'Genel': 'General',
+    'İnsan Kaynakları': 'Human Resources',
+    'Teknik Bakım': 'Maintenance',
+    'Bilgi İşlem': 'IT',
+    'Bilgi Güvenliği': 'Security',
+    'Etkinlik': 'Events',
+    'Toplantı': 'Meetings',
+    'Eğitim': 'Training',
+    'Finans': 'Finance',
+    'Sağlık ve İSG': 'Health & Safety',
+    'Yemekhane': 'Cafeteria',
+    'Servis ve Ulaşım': 'Transport',
+    'Diğer (kendim yazayım)': 'Other (type my own)',
+    'Kategori seçin (isteğe bağlı)': 'Choose a category (optional)',
+    'Kategori adı': 'Category name',
+    'Örn. Satış': 'e.g. Sales',
+    'Duyurunun konusu. Kapak görseli yoksa panodaki renk ve simge buradan gelir. Kimin göreceğini aşağıdaki “Kimler görsün” belirler.':
+        'The topic of the announcement. Without a cover image, the colour and icon on the dashboard come from it. “Who can see it” below decides who sees it.',
+    'Yayınlayan': 'Published by',
+    'Hedef gruplar okunamadı. Hedeflemeyi bozmamak için kaydetme kapatıldı; sayfayı yenileyip tekrar deneyin.':
+        'The target groups could not be loaded. Saving is disabled so the targeting is not lost; reload the page and try again.',
+    'Örn. Yıllık izin talepleri 15 Ekim’e kadar': 'e.g. Annual leave requests due 15 October',
+    'Önemli': 'Important',
+    'Önizleme': 'Preview',
+    'Öncelik': 'Priority',
+    'Üstü çizili': 'Strikethrough',
+    'İlk duyuruyu oluştur': 'Create the first announcement',
+    'İtalik': 'Italic',
+    '“{subject}” duyurusu silinsin mi? Bu işlem geri alınamaz.':
+        'Delete the announcement “{subject}”? This cannot be undone.',
+}
+
+# Arayüz: t('noticeboard', 'metin')
+JS_PATTERN = re.compile(r"t\(\s*'noticeboard'\s*,\s*'(.*?)'", re.S)
+
+# PHP: $this->l->t('metin')  /  $l->t('metin')
+# ⚠️ Bu tarama başta YOKTU; PHP metinleri "kullanılmıyor" sayılıp çeviri
+# dosyasından eleniyordu, yani widget başlıkları hiç çevrilmiyordu (Hata #20).
+#
+# Kalıp HER `->t('...')` çağrısını yakalar; eskiden yalnız `->l->t` ve `$l->t`
+# biçimini görüyordu, `$l10nFactory->get(...)->t('...')` gözden kaçıyordu.
+#
+# İkinci kalıp istisna şablonları: `new ValidationException('...')`. Bunlar
+# controller'da `$e->translate($l)` ile çevrilir (TranslatableException).
+# Eskiden hiç toplanmıyordu ve İngilizce kullanıcı hata mesajlarını Türkçe
+# görüyordu (Hata #25).
+PHP_PATTERN = re.compile(r"->t\(\s*'(.*?)'|Exception\(\s*'(.*?)'", re.S)
+
+
+def collect():
+    found = set()
+
+    for root, _dirs, files in os.walk('src'):
+        for name in files:
+            if name.endswith(('.vue', '.js')):
+                text = io.open(os.path.join(root, name), encoding='utf-8').read()
+                found.update(JS_PATTERN.findall(text))
+
+    for root, _dirs, files in os.walk('lib'):
+        for name in files:
+            if name.endswith('.php'):
+                text = io.open(os.path.join(root, name), encoding='utf-8').read()
+                # Yorumlar atılır: açıklama satırındaki örnek kod (`new XException('...')`)
+                # gerçek metin sanılıp sözlüğe "..." diye giriyordu (Hata #22'nin aynısı).
+                text = re.sub(r'/\*.*?\*/', '', text, flags=re.S)
+                text = re.sub(r'^\s*//.*$', '', text, flags=re.M)
+                for a, b in PHP_PATTERN.findall(text):
+                    found.add(a or b)
+
+    found.discard('')
+    return found
+
+
+def main():
+    found = collect()
+
+    missing = sorted(s for s in found if s not in TRANSLATIONS)
+    unused = sorted(s for s in TRANSLATIONS if s not in found)
+
+    for s in missing:
+        print('UYARI cevirisi yok:', s)
+    for s in unused:
+        print('BILGI  kodda kullanilmiyor:', s)
+
+    table = {k: v for k, v in TRANSLATIONS.items() if k in found}
+    write_language('en', table, 'nplurals=2; plural=(n != 1);')
+
+    # ⚠️ tr KİMLİK EŞLEMESİ (her metin kendisine) — boş iş gibi görünür ama ŞART.
+    # Nextcloud PHP tarafında istenen dilin dosyası app'te YOKSA o dili "yok"
+    # sayar ve başka bir dile düşer: 24 Eyl 2026'da ölçüldü, get('noticeboard','tr')
+    # İngilizce döndü. Yani tr.json olmadan Türkçe kullanıcı bildirim, e-posta,
+    # widget başlığı ve hata mesajlarını İNGİLİZCE görürdü; tarayıcı ise Türkçe
+    # kalırdı → karışık dil (Hata #26).
+    write_language('tr', {k: k for k in sorted(found)}, 'nplurals=2; plural=(n > 1);')
+
+    print('l10n/{en,tr}.{json,js} yazildi:', len(table), 'metin')
+    return 1 if missing else 0
+
+
+def write_language(code, table, plural):
+    os.makedirs('l10n', exist_ok=True)
+
+    io.open('l10n/%s.json' % code, 'w', encoding='utf-8', newline='\n').write(
+        json.dumps({'translations': table, 'pluralForm': plural}, ensure_ascii=False, indent=4) + '\n'
+    )
+
+    io.open('l10n/%s.js' % code, 'w', encoding='utf-8', newline='\n').write(
+        'OC.L10N.register(\n    "noticeboard",\n    '
+        + json.dumps(table, ensure_ascii=False, indent=4).replace('\n', '\n    ')
+        + ',\n    "' + plural + '"\n);\n'
+    )
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

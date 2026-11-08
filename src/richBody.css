@@ -1,0 +1,92 @@
+/*
+ * Duyuru gövdesindeki görsellerin yerleşimi (27 Eki 2026).
+ *
+ * Okuma görünümü (AnnouncementDetail — oluşturma ekranının önizlemesi de odur)
+ * ve editör AYNI dosyayı kullanır: editörde görülen yerleşim okuyucunun
+ * göreceğinin ta kendisi olsun.
+ *
+ * "Kutu": okuma görünümünde `<img data-nb-file>` kendisi, editörde onu saran
+ * `.nb-box` (köşe tutamağı orada). Yerleşim öznitelikleri kutunun üstündedir.
+ * Taban kurallar `:where()` ile özgüllüksüz — yerleşim kuralları ezebilsin.
+ *
+ * ⚠️ `data-nb-width` değerleri HtmlSanitizer::IMAGE_WIDTH ile aynı küme;
+ * birine ekleyen ötekine de eklemeli (tests/js/inlineImageTools.test.mjs denetler).
+ */
+
+.nb-rich {
+	/* Yüzen görsel gövdenin dışına (eklere, yorumlara) taşmasın. */
+	display: flow-root;
+	container-type: inline-size;
+}
+
+.nb-rich :where(.nb-box, img[data-nb-file]) {
+	display: block;
+	max-width: 100%;
+	height: auto;
+	margin: 0 0 12px;
+	border-radius: var(--border-radius-large, 12px);
+}
+
+.nb-rich :where(.nb-box) {
+	position: relative;
+	width: fit-content;
+}
+
+.nb-rich :where(.nb-box) img {
+	display: block;
+	max-width: 100%;
+	height: auto;
+	border-radius: inherit;
+}
+
+.nb-rich :where(.nb-box[data-nb-width]) img {
+	width: 100%;
+}
+
+.nb-rich [data-nb-align="left"] {
+	float: left;
+	margin: 4px 20px 12px 0;
+}
+
+.nb-rich [data-nb-align="right"] {
+	float: right;
+	margin: 4px 0 12px 20px;
+}
+
+.nb-rich [data-nb-align="center"] {
+	margin-right: auto;
+	margin-left: auto;
+}
+
+.nb-rich [data-nb-width="10"] { width: 10%; }
+.nb-rich [data-nb-width="15"] { width: 15%; }
+.nb-rich [data-nb-width="20"] { width: 20%; }
+.nb-rich [data-nb-width="25"] { width: 25%; }
+.nb-rich [data-nb-width="30"] { width: 30%; }
+.nb-rich [data-nb-width="35"] { width: 35%; }
+.nb-rich [data-nb-width="40"] { width: 40%; }
+.nb-rich [data-nb-width="45"] { width: 45%; }
+.nb-rich [data-nb-width="50"] { width: 50%; }
+.nb-rich [data-nb-width="55"] { width: 55%; }
+.nb-rich [data-nb-width="60"] { width: 60%; }
+.nb-rich [data-nb-width="65"] { width: 65%; }
+.nb-rich [data-nb-width="70"] { width: 70%; }
+.nb-rich [data-nb-width="75"] { width: 75%; }
+.nb-rich [data-nb-width="80"] { width: 80%; }
+.nb-rich [data-nb-width="85"] { width: 85%; }
+.nb-rich [data-nb-width="90"] { width: 90%; }
+.nb-rich [data-nb-width="95"] { width: 95%; }
+.nb-rich [data-nb-width="100"] { width: 100%; }
+
+/*
+ * Dar ekranda (telefon) metin yanında akan görsel iki parmak genişliğinde
+ * sütunlar bırakır; görsel kendi satırına iner, tam genişlik olur.
+ * Sınır gövdenin GENİŞLİĞİ (kapsayıcı sorgusu), pencere değil.
+ */
+@container (max-width: 420px) {
+	.nb-rich :is([data-nb-align="left"], [data-nb-align="right"]) {
+		float: none;
+		width: auto;
+		margin: 0 0 12px;
+	}
+}

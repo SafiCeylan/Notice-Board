@@ -1,0 +1,31 @@
+/*
+ * Pano widget başlığındaki ikonlar.
+ *
+ * Widget kendi Vue tasarımını yüklediğinde Nextcloud başlıkta YALNIZCA
+ * `getIconClass()` sınıfını basar (`<span class="icon-noticeboard-list">`);
+ * ikon adresini kullanmaz. Sınıf tanımlanmazsa başlıkta ikon hiç görünmez.
+ * (Widget seçici ise `getIconUrl()` görselini kullanır — ikisi aynı dosya.)
+ *
+ * Koyu ikon + tema filtresi: açık temada koyu, karanlık temada Nextcloud'un
+ * kendi değişkeniyle beyaza döner — çekirdek uygulamaların ikonlarıyla aynı.
+ */
+.icon-noticeboard-list,
+.icon-noticeboard-cards,
+.icon-noticeboard-slider {
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 24px;
+	filter: var(--background-invert-if-dark);
+}
+
+.icon-noticeboard-list {
+	background-image: url('../img/widget-list.svg');
+}
+
+.icon-noticeboard-cards {
+	background-image: url('../img/widget-cards.svg');
+}
+
+.icon-noticeboard-slider {
+	background-image: url('../img/widget-slider.svg');
+}
